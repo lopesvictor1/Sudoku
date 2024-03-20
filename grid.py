@@ -41,14 +41,23 @@ def create_grid(sub_grid: int) -> list[list]:
     return [[nums[pattern(r, c)] for c in cols] for r in rows]
 
 
-
+def remove_numbers(grid: list[list]) -> None:
+    "Ramdomly removes a set of numbers"
+    num_cells = GRID_SIZE * GRID_SIZE
+    empties = num_cells * 3 // 7  #7 is good, higher number means easier game, lower number means harder game
+    for i in sample(range(num_cells), empties):
+        grid[i // GRID_SIZE][i % GRID_SIZE] = 0
 
 class Grid:
     def __init__(self, font):
         self.cell_size = 100
+        self.num_x_offset = 35
+        self.num_y_offset = 12
         self.lines_coordinates = create_line_coordinates(self.cell_size)
         self.grid = create_grid(SUB_GRID_SIZE)
         self.game_font = font
+        remove_numbers(self.grid)
+        self.occupied_cells_coordinates = self.pre_occupied_cells()
         
     def get_cell(self, x: int, y: int) -> int:
         "get the value of the cell in position (y,x)"
@@ -58,25 +67,52 @@ class Grid:
         "set the value of the cell in position (y, x)"
         self.grid[y][x] = value
         
+    def get_mouse_click(self, x: int, y: int) -> None:
+        if x <= 900:
+            grid_x, grid_y = x // 100, y // 100
+            #print(grid_x, grid_y)
+            if not self.is_cell_preoccupied(grid_x, grid_y):
+                value = -1
+                self.set_cell(grid_x, grid_y, value)
+    
+    def pre_occupied_cells(self) -> list[tuple]:
+        "gets a list of the initialized cells"
+        occupied_cells = []
+        for y in range(len(self.grid)):
+            for x in range(len(self.grid[y])):
+                if self.get_cell(x, y) != 0:
+                   occupied_cells.append((y, x))
+        return occupied_cells
+                   
+    def is_cell_preoccupied(self, x: int, y: int) -> bool:
+        "check if position (x, y) was initialized"
+        for cell in self.occupied_cells_coordinates:
+            if cell[1] == x and cell[0] == y:
+                return True
+        return False
         
-    def draw_lines(self, pg, surface) -> None:
+    def __draw_lines(self, pg, surface) -> None:
         for index, point in enumerate(self.lines_coordinates):
             if index == 2 or index == 5 or index == 10 or index == 13 or index == 16:
                 pg.draw.line(surface, (0, 0, 0), point[0], point[1], 2)
             else:
                 pg.draw.line(surface, (220, 220, 220), point[0], point[1])
-    
-    def show(self):
-        for cell in self.grid:
-            print(cell)
             
-    def draw_numbers(self, surface):
+    def __draw_numbers(self, surface) -> None:
         "Draw Game Numbers"
         for y in range(len(self.grid)):
             for x in range(len(self.grid[y])):
-                text_surface = self.game_font.render(str(self.get_cell(x, y)), False, (0,200, 255))
-                surface.blit(text_surface, (x * self.cell_size, y * self.cell_size))
+                if self.get_cell(x, y) != 0:
+                    text_surface = self.game_font.render(str(self.get_cell(x, y)), False, (0,100, 255))
+                    surface.blit(text_surface, (x * self.cell_size + self.num_x_offset, y * self.cell_size + self.num_y_offset))
                 
+    def show(self) -> None:
+        for cell in self.grid:
+            print(cell)
+            
+    def draw_all(self, pg, surface) -> None:
+        self.__draw_lines(pg, surface)
+        self.__draw_numbers(surface)
 
 
 if __name__ == "__main__":

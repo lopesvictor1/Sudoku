@@ -20,7 +20,12 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if pygame.mouse.get_pressed()[0]:   #check only for left mouse button
+                pos = pygame.mouse.get_pos()
+                grid.get_mouse_click(pos[0], pos[1])
+                
     
     surface.fill((255,255,255))
-    grid.draw_lines(pygame, surface)
+    grid.draw_all(pygame, surface)
     pygame.display.flip()
